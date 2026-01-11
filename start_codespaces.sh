@@ -8,45 +8,37 @@ echo "  TO_EXTRACTOR - Avvio Codespaces"
 echo "=========================================="
 
 # 1. Avvia PostgreSQL
-echo "[1/4] Avvio PostgreSQL..."
-sudo service postgresql start
+echo "[1/3] Avvio PostgreSQL..."
+sudo service postgresql start 2>/dev/null || pg_ctlcluster 15 main start 2>/dev/null || echo "PostgreSQL potrebbe essere già attivo"
 sleep 2
 
-# 2. Verifica database
-echo "[2/4] Verifica database..."
-PGPASSWORD=to_extractor_pwd psql -h 127.0.0.1 -U to_extractor_user -d to_extractor -c "SELECT COUNT(*) FROM operatori;" > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "  ⚠ Database non configurato. Esegui prima setup_codespaces.sh"
-    exit 1
-fi
-echo "  ✓ Database OK"
-
-# 3. Avvia Backend in background
-echo "[3/4] Avvio Backend..."
+# 2. Avvia Backend
+echo "[2/3] Avvio Backend (in background)..."
 cd /workspaces/extractor_v2/backend
 source venv/bin/activate
-uvicorn app.main:app --reload --host 0.0.0.0 &
+nohup uvicorn app.main:app --reload --host 0.0.0.0 > /tmp/backend.log 2>&1 &
 BACKEND_PID=$!
-sleep 3
+sleep 2
 
-# 4. Avvia Frontend
-echo "[4/4] Avvio Frontend..."
+# 3. Avvia Frontend
+echo "[3/3] Avvio Frontend (in background)..."
 cd /workspaces/extractor_v2/frontend
-npm run dev -- --host &
+nohup npm run dev -- --host > /tmp/frontend.log 2>&1 &
 FRONTEND_PID=$!
+sleep 2
 
 echo ""
 echo "=========================================="
 echo "  TO_EXTRACTOR Avviato!"
 echo "=========================================="
 echo ""
-echo "  Backend PID:  $BACKEND_PID"
-echo "  Frontend PID: $FRONTEND_PID"
+echo "  Backend:  http://localhost:8000  (PID: $BACKEND_PID)"
+echo "  Frontend: http://localhost:5173  (PID: $FRONTEND_PID)"
 echo ""
-echo "  Per fermare: kill $BACKEND_PID $FRONTEND_PID"
+echo "  Log backend:  tail -f /tmp/backend.log"
+echo "  Log frontend: tail -f /tmp/frontend.log"
+echo ""
+echo "  Fermare tutto: pkill -f uvicorn; pkill -f vite"
 echo ""
 echo "  Credenziali: admin / admin123"
 echo "=========================================="
-
-# Attendi
-wait
