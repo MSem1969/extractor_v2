@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source venv/bin/activate)",
+      "Bash(python -c:*)",
+      "Bash(timeout 5 python:*)",
+      "Bash(npm run build:*)",
+      "Bash(for:*)",
+      "Bash(do sed -i 's|from \"\"./api\"\"|from \"\"../api\"\"|g; s|from \"\"./common\"\"|from \"\"../common\"\"|g; s|from \"\"./components/|from \"\"../components/|g; s|from \"\"./layout\"\"|from \"\"../layout\"\"|g; s|from \"\"./hooks/|from \"\"../hooks/|g' \"$f\")",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}
