@@ -4,9 +4,6 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
-    },
-    "ghcr.io/devcontainers-extra/features/postgresql:1": {
-      "version": "15"
     }
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",

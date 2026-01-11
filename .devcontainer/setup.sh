@@ -5,31 +5,35 @@ echo "=========================================="
 echo "  TO_EXTRACTOR - Codespaces Setup"
 echo "=========================================="
 
-# Wait for PostgreSQL to be ready
-echo "Waiting for PostgreSQL..."
-sleep 3
+# Install PostgreSQL
+echo "Installing PostgreSQL..."
+sudo apt-get update
+sudo apt-get install -y postgresql postgresql-contrib
 
-# Start PostgreSQL if not running
-sudo service postgresql start || true
-sleep 2
+# Start PostgreSQL
+echo "Starting PostgreSQL..."
+sudo service postgresql start
+sleep 3
 
 # Create database and user
 echo "Setting up database..."
-sudo -u postgres psql -c "CREATE USER to_extractor_user WITH PASSWORD 'to_extractor_pwd';" 2>/dev/null || true
-sudo -u postgres psql -c "CREATE DATABASE to_extractor OWNER to_extractor_user;" 2>/dev/null || true
+sudo -u postgres psql -c "CREATE USER to_extractor_user WITH PASSWORD 'to_extractor_pwd';" 2>/dev/null || echo "User already exists"
+sudo -u postgres psql -c "CREATE DATABASE to_extractor OWNER to_extractor_user;" 2>/dev/null || echo "Database already exists"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE to_extractor TO to_extractor_user;" 2>/dev/null || true
 
 # Import database dump
 echo "Importing database..."
 if [ -f "database_export.dump" ]; then
     sudo -u postgres pg_restore -d to_extractor --clean --if-exists database_export.dump 2>/dev/null || \
-    sudo -u postgres pg_restore -d to_extractor database_export.dump || true
-    echo "Database imported successfully!"
+    sudo -u postgres pg_restore -d to_extractor database_export.dump 2>/dev/null || \
+    echo "Warning: Could not restore dump (may be empty or incompatible)"
+    echo "Database import attempted"
 else
     echo "Warning: database_export.dump not found"
 fi
 
 # Grant permissions
+sudo -u postgres psql -d to_extractor -c "GRANT ALL ON SCHEMA public TO to_extractor_user;" 2>/dev/null || true
 sudo -u postgres psql -d to_extractor -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO to_extractor_user;" 2>/dev/null || true
 sudo -u postgres psql -d to_extractor -c "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO to_extractor_user;" 2>/dev/null || true
 
@@ -60,6 +64,9 @@ echo ""
 echo "=========================================="
 echo "  Setup Complete!"
 echo "=========================================="
+echo ""
+echo "IMPORTANT: Start PostgreSQL before running the app:"
+echo "  sudo service postgresql start"
 echo ""
 echo "To start the application:"
 echo ""
